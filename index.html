@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lucky Wheel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<style>
+
+  @font-face {
+  font-family: 'Poppins';
+  src: url('font.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+  body {
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background: #A7A7A7;
+}
+
+.container {
+  text-align: center;
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 100%;
+}
+
+h1 {
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #ff7e5f, #feb47b);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.form {
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+input {
+  font-family: 'Poppins', sans-serif;
+  padding: 10px 15px;
+  font-size: 18px;
+  border: 2px solid #feb47b;
+  border-radius: 5px;
+  margin-right: 10px;
+  width: 250px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+input:focus {
+  border-color: #ff7e5f;
+  box-shadow: 0 0 5px rgba(255, 126, 95, 0.5);
+}
+
+button {
+  font-family: 'Poppins', sans-serif;
+  padding: 10px 20px;
+  background-color: #ff7e5f;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:disabled {
+  font-family: 'Poppins', sans-serif;
+  background-color: #ccc;
+}
+
+button:hover:not(:disabled) {
+  background-color: #e45e4c;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.name-list {
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 20px;
+  max-height: 150px;
+  overflow-y: auto;
+  border: 2px solid #feb47b;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: #f9f9f9;
+}
+
+.name-list ul {
+  font-family: 'Poppins', sans-serif;
+  list-style-type: none;
+  padding: 0;
+}
+
+.name-list ul li {
+  font-family: 'Poppins', sans-serif;
+  padding: 10px 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  color: #333;
+  background: #fff;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.name-list ul li .remove-btn {
+  font-family: 'Poppins', sans-serif;
+  background-color: #ff4e50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.name-list ul li .remove-btn:hover {
+  background-color: #c0392b;
+}
+
+.wheel-container {
+  font-family: 'Poppins', sans-serif;
+  margin-top: 20px;
+}
+
+#wheelCanvas {
+  font-family: 'Poppins', sans-serif;
+  border-radius: 50%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+#winnerDisplay {
+  font-family: 'Poppins', sans-serif;
+  margin-top: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff7e5f;
+  background-color: #fff8f0;
+  padding: 10px;
+  border-radius: 5px;
+  border: 2px solid #ff7e5f;
+}
+
+</style>
+<body>
+  <div class="container">
+    <h1>Lucky Wheel</h1>
+    <div class="form">
+      <input type="text" id="nameInput" placeholder="Enter a name">
+      <button id="addNameBtn">Add Name</button>
+    </div>
+    <div class="name-list">
+      <ul id="nameList"></ul>
+    </div>
+    <button id="spinBtn" disabled>Spin the Wheel</button>
+    <div class="wheel-container">
+      <canvas id="wheelCanvas" width="500" height="500"></canvas>
+    </div>
+    <div id="winnerDisplay"></div>
+  </div>
+
+  <script>
+    const names = [];
+let firstSpin = true;
+const nameInput = document.getElementById('nameInput');
+const nameList = document.getElementById('nameList');
+const addNameBtn = document.getElementById('addNameBtn');
+const spinBtn = document.getElementById('spinBtn');
+const wheelCanvas = document.getElementById('wheelCanvas');
+const ctx = wheelCanvas.getContext('2d');
+const winnerDisplay = document.getElementById('winnerDisplay');
+
+let isSpinning = false;
+let angle = 0;
+let spinDuration = 3000; // Spin for 3 seconds
+
+function drawWheel() {
+  const sections = names.length;
+  const arcSize = (2 * Math.PI) / sections;
+  ctx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+
+  for (let i = 0; i < sections; i++) {
+    const angleStart = i * arcSize;
+    ctx.beginPath();
+    ctx.arc(250, 250, 250, angleStart, angleStart + arcSize);
+    ctx.lineTo(250, 250);
+    ctx.fillStyle = `hsl(${(i * 360) / sections}, 100%, 50%)`;
+    ctx.fill();
+    ctx.stroke();
+
+    // Add names to wheel
+    ctx.save();
+    ctx.translate(250, 250);
+    ctx.rotate(angleStart + arcSize / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(names[i], 230, 10);
+    ctx.restore();
+  }
+}
+
+function addName() {
+  const name = nameInput.value.trim();
+  if (name && !names.includes(name)) {
+    names.push(name);
+    const li = document.createElement('li');
+    li.innerHTML = `${name} <button class="remove-btn" onclick="removeName('${name}')">Remove</button>`;
+    nameList.appendChild(li);
+    nameInput.value = '';
+    spinBtn.disabled = false;
+    drawWheel();
+  }
+}
+
+function removeName(name) {
+  const index = names.indexOf(name);
+  if (index > -1) {
+    names.splice(index, 1);
+    renderNameList();
+    if (names.length === 0) {
+      spinBtn.disabled = true;
+    }
+    drawWheel();
+  }
+}
+
+function renderNameList() {
+  nameList.innerHTML = '';
+  names.forEach((name) => {
+    const li = document.createElement('li');
+    li.innerHTML = `${name} <button class="remove-btn" onclick="removeName('${name}')">Remove</button>`;
+    nameList.appendChild(li);
+  });
+}
+
+function spinWheel() {
+  if (isSpinning || names.length === 0) return;
+  isSpinning = true;
+  
+  const spinStart = performance.now();
+  const spinEndAngle = angle + (Math.random() * 10 + 5) * 360; // Spin with random factor
+
+  let selectedName;
+  
+  // Ensure first spin selects "Masrur"
+  if (firstSpin) {
+    if (!names.includes('Masrur')) {
+      names.push('Masrur');
+      renderNameList();
+      drawWheel();
+    }
+    selectedName = 'Masrur';
+    firstSpin = false;
+  } else {
+    selectedName = names[Math.floor(Math.random() * names.length)];
+  }
+
+  function animateWheel(time) {
+    const elapsed = time - spinStart;
+    const progress = Math.min(elapsed / spinDuration, 1);
+    angle = spinEndAngle * easeOutCubic(progress);
+    drawWheelWithRotation(angle);
+    if (progress < 1) {
+      requestAnimationFrame(animateWheel);
+    } else {
+      isSpinning = false;
+      winnerDisplay.textContent = `The winner is: ${selectedName}`;
+      removeName(selectedName); // Remove the winner from the list
+    }
+  }
+
+  requestAnimationFrame(animateWheel);
+}
+
+function drawWheelWithRotation(rotation) {
+  ctx.save();
+  ctx.translate(250, 250);
+  ctx.rotate(rotation);
+  ctx.translate(-250, -250);
+  drawWheel();
+  ctx.restore();
+}
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+addNameBtn.addEventListener('click', addName);
+spinBtn.addEventListener('click', spinWheel);
+
+drawWheel();
+
+
+  </script>
+</body>
+</html>
